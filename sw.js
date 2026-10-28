@@ -1,6 +1,6 @@
 // Service worker: guarda la app para que abra rápido y sin conexión.
 // Cambiá la versión cada vez que subas cambios para que el celular los tome.
-const VERSION = "v1";
+const VERSION = "v2";
 const ARCHIVOS = [
   "./", "index.html", "styles.css", "app.js", "manifest.webmanifest",
   "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",

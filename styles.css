@@ -96,6 +96,10 @@ textarea:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 
 .drop input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .drop b { color: var(--text); }
 
+.fila-link { display: flex; gap: 8px; }
+.fila-link input { flex: 1; min-width: 0; }
+#spotify-estado { margin: 10px 0 0; }
+
 .fila-acciones { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
 .fila-acciones .sub { margin: 0; }
 

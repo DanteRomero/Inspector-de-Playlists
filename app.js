@@ -18,6 +18,7 @@ const CLAVE_API = "yt_api_key";
 const CACHE = "yt_cache";       // { consulta: {id, titulo, canal, thumb} }
 const CUOTA = "yt_cuota";       // { dia: "YYYY-MM-DD", usada: n }
 const ULTIMA = "ultima_lista";  // última lista procesada
+const WORKER = "spotify_worker"; // URL del Cloudflare Worker que lee Spotify
 
 // ------------------------------------------------------------ utilidades
 const $ = (s) => document.querySelector(s);
@@ -110,9 +111,46 @@ function leerCSV(texto) {
     const principal = artistas.split(/\s*[,;&]\s*|\s+feat\.?\s+/i)[0] || "";
     return {
       nombre: artistas ? `${artistas.replace(/;/g, ", ")} - ${cancion}` : cancion,
-      consulta: `${principal} ${cancion}`.trim(),
+      consulta: `${principal} ${limpiarTitulo(cancion)}`.trim(),
     };
   }).filter((x) => x.consulta);
+}
+
+/** Saca agregados tipo "- Remastered 2009" o "- Radio Edit" que empeoran la búsqueda. */
+function limpiarTitulo(t) {
+  return t.replace(/\s+-\s+(.*\b(remaster(ed)?|re-?recording|radio edit|single version|mono|stereo)\b.*|(theme )?from\b.*)$/i, "");
+}
+
+/** Acepta open.spotify.com/(intl-xx/)playlist/ID, spotify:playlist:ID o el ID solo. */
+function idPlaylist(link) {
+  const m = link.trim().match(/playlist[/:]([A-Za-z0-9]{22})(?![A-Za-z0-9])|^([A-Za-z0-9]{22})$/);
+  return m ? m[1] || m[2] : null;
+}
+
+async function leerSpotify(link) {
+  const worker = store.get(WORKER, "");
+  if (!worker) throw new Error("Primero cargá la dirección de tu Worker en Ajustes.");
+  if (/spotify\.link|spotify\.app\.link/i.test(link))
+    throw new Error("Ese es un link corto. Abrilo y copiá el link largo (open.spotify.com/playlist/...).");
+  const id = idPlaylist(link);
+  if (!id) throw new Error("No reconozco ese link de playlist.");
+
+  const url = new URL(worker);
+  url.searchParams.set("id", id);
+  let r;
+  try { r = await fetch(url); }
+  catch { throw new Error("No me pude conectar con el Worker. Revisá la dirección en Ajustes."); }
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || `El Worker respondió ${r.status}.`);
+
+  return {
+    nombre: data.nombre,
+    total: data.total,
+    canciones: data.canciones.map(({ titulo, artistas }) => ({
+      nombre: `${artistas.join(", ")} - ${titulo}`,
+      consulta: `${artistas[0]} ${limpiarTitulo(titulo)}`.trim(),
+    })),
+  };
 }
 
 // ------------------------------------------------------------ YouTube
@@ -180,9 +218,34 @@ $$(".tab").forEach((t) => t.addEventListener("click", () => {
   $$(".tab").forEach((x) => { x.classList.toggle("activa", x === t); x.setAttribute("aria-selected", x === t); });
   $$(".panel").forEach((p) => (p.hidden = p.dataset.panel !== t.dataset.tab));
   if (t.dataset.tab === "texto") canciones = leerTexto($("#entrada").value);
+  else if (t.dataset.tab === "spotify") canciones = cancionesSpotify;
   else canciones = cancionesCSV;
   actualizarContador();
 }));
+
+let cancionesSpotify = [];
+$("#form-spotify").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const link = $("#link-spotify").value;
+  if (!link.trim()) return;
+  const estado = $("#spotify-estado");
+  $("#btn-leer").disabled = true;
+  estado.textContent = "Leyendo la playlist…";
+  try {
+    const p = await leerSpotify(link);
+    cancionesSpotify = p.canciones;
+    estado.textContent = `✔ ${p.nombre ? p.nombre + ": " : ""}${p.canciones.length} canciones`;
+    if (p.total > p.canciones.length)
+      estado.textContent += `. Spotify solo deja leer ${p.canciones.length} de ${p.total}; para las demás usá el CSV o pegalas a mano.`;
+  } catch (err) {
+    cancionesSpotify = [];
+    estado.textContent = `✖ ${err.message}`;
+  }
+  $("#btn-leer").disabled = false;
+  if (tabActiva() === "spotify") { canciones = cancionesSpotify; actualizarContador(); }
+});
+// Al pegar un link se lee solo
+$("#link-spotify").addEventListener("paste", () => setTimeout(() => $("#form-spotify").requestSubmit()));
 
 $("#entrada").addEventListener("input", (e) => {
   canciones = leerTexto(e.target.value);
@@ -359,6 +422,7 @@ $("#btn-cancelar").addEventListener("click", () => controlador?.abort());
 const dlg = $("#ajustes");
 function abrirAjustes() {
   $("#clave").value = store.get(CLAVE_API, "");
+  $("#worker").value = store.get(WORKER, "");
   const usada = cuotaUsada();
   $("#cuota-hoy").textContent = `Hoy usaste aprox. ${usada} de 10.000 unidades (${Math.max(0, Math.floor((10000 - usada) / 100))} búsquedas disponibles).`;
   dlg.showModal();
@@ -368,6 +432,8 @@ $$("[data-abrir-ajustes]").forEach((b) => b.addEventListener("click", abrirAjust
 $("#btn-guardar").addEventListener("click", () => {
   const v = $("#clave").value.trim();
   v ? store.set(CLAVE_API, v) : store.del(CLAVE_API);
+  const w = $("#worker").value.trim().replace(/\/+$/, "");
+  w ? store.set(WORKER, /^https?:\/\//i.test(w) ? w : `https://${w}`) : store.del(WORKER);
   actualizarAviso();
   toast(v ? "Clave guardada" : "Clave borrada");
 });
@@ -389,4 +455,4 @@ if ("serviceWorker" in navigator) {
 }
 
 // Exportado para pruebas (no afecta a la app)
-window.__test = { leerTexto, leerCSV, normalizar };
+window.__test = { leerTexto, leerCSV, normalizar, limpiarTitulo, idPlaylist };

@@ -28,9 +28,25 @@ Límite: 10.000 unidades por día, y cada canción nueva gasta 100, o sea **unas
 
 Cuando subas cambios, subí también la versión en `sw.js` (`v1` → `v2`) para que el celular tome lo nuevo.
 
-## 4. Sacar la lista de tu playlist de Spotify
+## 4. Leer la playlist desde el link de Spotify (Cloudflare Worker, gratis)
 
-Sin Spotify Premium no se puede leer la playlist directo desde la app, así que hay dos caminos:
+Para pegar directamente el link (`https://open.spotify.com/playlist/...`) la app necesita un pequeño intermediario, porque Spotify no deja que otra página lea sus datos desde el navegador. Se arma una sola vez:
+
+1. Creá una cuenta gratis en [dash.cloudflare.com](https://dash.cloudflare.com/sign-up).
+2. Andá a **Compute (Workers) → Workers & Pages → Create → Create Worker** (si te ofrece plantillas, elegí *Hello World*). Ponele un nombre, por ejemplo `playlist-yt`, y tocá **Deploy**.
+3. Tocá **Edit code**, borrá todo, pegá el contenido de [`worker/spotify-worker.js`](worker/spotify-worker.js) y tocá **Deploy**.
+4. Copiá la dirección del Worker (algo como `https://playlist-yt.TU-USUARIO.workers.dev`), abrí la app, tocá ⚙️ y pegala en **Dirección de tu Worker de Spotify**.
+5. *(Opcional, recomendado)* En el Worker andá a **Settings → Variables and Secrets → Add**, nombre `ORIGEN`, valor `https://TU-USUARIO.github.io`. Así solo tu app puede usarlo.
+
+Para probarlo, abrí en el navegador `https://playlist-yt.TU-USUARIO.workers.dev/?id=31i1DA49WqpASSfzMFxyG1`. Tendría que aparecer la lista de canciones. El plan gratis permite 100.000 usos por día.
+
+Limitaciones:
+- La playlist tiene que ser **pública**.
+- Spotify deja leer como máximo **100 canciones** por playlist. Si tiene más, la app te avisa; las que faltan agregalas con el CSV o pegándolas a mano.
+- Usa la página que Spotify ofrece para insertar playlists en otros sitios, no su API oficial. Si Spotify la cambia, puede dejar de funcionar; en ese caso quedan los otros dos caminos.
+- Los links cortos (`spotify.link/...`) no sirven: abrilos y copiá el link largo.
+
+## 5. Otras formas de cargar la lista
 
 - **Exportar a CSV** con un exportador como [Exportify](https://exportify.net) y subir ese archivo en la pestaña *Subir CSV*. La app reconoce las columnas de canción y artista de Exportify, TuneMyMusic y similares. (Spotify cambió su API en 2026, así que algún exportador puede dejar de andar.)
 - **Pegar la lista** a mano, una canción por línea: `Artista - Canción`.
@@ -48,3 +64,4 @@ Sin Spotify Premium no se puede leer la playlist directo desde la app, así que 
 | `styles.css` | Estilos (modo claro y oscuro automático) |
 | `app.js` | Lectura de la lista, búsqueda en YouTube, resultados |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Lo que la hace instalable y usable sin conexión |
+| `worker/spotify-worker.js` | Código para el Cloudflare Worker que lee la playlist de Spotify (no lo usa GitHub Pages) |

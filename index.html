@@ -34,14 +34,24 @@
 
     <section class="card">
       <h2>1. Tu lista de canciones</h2>
-      <p class="sub">Pegá una canción por línea (<i>Artista - Canción</i>) o subí el CSV exportado de tu playlist.</p>
+      <p class="sub">Pegá el link de tu playlist de Spotify, una canción por línea (<i>Artista - Canción</i>) o subí el CSV exportado.</p>
 
       <div class="tabs" role="tablist">
-        <button role="tab" class="tab activa" data-tab="texto" aria-selected="true">Pegar lista</button>
+        <button role="tab" class="tab activa" data-tab="spotify" aria-selected="true">Link de Spotify</button>
+        <button role="tab" class="tab" data-tab="texto" aria-selected="false">Pegar lista</button>
         <button role="tab" class="tab" data-tab="csv" aria-selected="false">Subir CSV</button>
       </div>
 
-      <div class="panel" data-panel="texto">
+      <div class="panel" data-panel="spotify">
+        <form id="form-spotify" class="fila-link">
+          <input id="link-spotify" type="text" inputmode="url" autocomplete="off" spellcheck="false"
+            placeholder="https://open.spotify.com/playlist/...">
+          <button id="btn-leer" class="btn">Leer</button>
+        </form>
+        <p id="spotify-estado" class="sub"></p>
+      </div>
+
+      <div class="panel" data-panel="texto" hidden>
         <textarea id="entrada" rows="7" spellcheck="false"
           placeholder="Soda Stereo - De música ligera&#10;Bad Bunny - Tití me preguntó&#10;Charly García - Demoliendo hoteles"></textarea>
       </div>
@@ -90,6 +100,9 @@
       <input id="clave" type="password" autocomplete="off" placeholder="AIza...">
       <p class="sub">Se guarda solo en este dispositivo, no se sube a GitHub. Cada canción buscada gasta 100 de las 10.000 unidades diarias (≈100 canciones por día). Las que ya buscaste quedan guardadas y no gastan de nuevo.</p>
       <p class="sub" id="cuota-hoy"></p>
+      <label for="worker">Dirección de tu Worker de Spotify</label>
+      <input id="worker" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://playlist-yt.TU-USUARIO.workers.dev">
+      <p class="sub">Es lo que permite leer la playlist desde el link. Cómo crearlo: ver el README.</p>
       <div class="fila-acciones">
         <button type="button" id="btn-borrar-cache" class="btn chico">Borrar canciones guardadas</button>
         <button value="ok" id="btn-guardar" class="btn primario">Guardar</button>
