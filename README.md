@@ -23,6 +23,8 @@ Límite: 10.000 unidades por día, y cada canción nueva gasta 100, o sea **unas
 
 ## 3. Instalarla en el celular
 
+La app muestra arriba un aviso para instalarla. En Android trae un botón **Instalar**; en iPhone explica los pasos. Si no aparece, se puede hacer a mano:
+
 - **Android (Chrome):** abrí el link, menú ⋮ → **Instalar app** o **Agregar a pantalla principal**.
 - **iPhone (Safari):** botón Compartir → **Agregar a inicio**.
 
@@ -35,7 +37,7 @@ Para pegar directamente el link (`https://open.spotify.com/playlist/...`) la app
 1. Creá una cuenta gratis en [dash.cloudflare.com](https://dash.cloudflare.com/sign-up).
 2. Andá a **Compute (Workers) → Workers & Pages → Create → Create Worker** (si te ofrece plantillas, elegí *Hello World*). Ponele un nombre, por ejemplo `playlist-yt`, y tocá **Deploy**.
 3. Tocá **Edit code**, borrá todo, pegá el contenido de [`worker/spotify-worker.js`](worker/spotify-worker.js) y tocá **Deploy**.
-4. Copiá la dirección del Worker (algo como `https://playlist-yt.TU-USUARIO.workers.dev`), abrí la app, tocá ⚙️ y pegala en **Dirección de tu Worker de Spotify**.
+4. Copiá la dirección del Worker (algo como `https://playlist-yt.TU-USUARIO.workers.dev`) y ponela en `WORKER_POR_DEFECTO` al principio de `app.js`. También se puede cambiar desde la app en ⚙️ → **Dirección de tu Worker de Spotify** (eso queda guardado solo en ese dispositivo).
 5. *(Opcional, recomendado)* En el Worker andá a **Settings → Variables and Secrets → Add**, nombre `ORIGEN`, valor `https://TU-USUARIO.github.io`. Así solo tu app puede usarlo.
 
 Para probarlo, abrí en el navegador `https://playlist-yt.TU-USUARIO.workers.dev/?id=31i1DA49WqpASSfzMFxyG1`. Tendría que aparecer la lista de canciones. El plan gratis permite 100.000 usos por día.

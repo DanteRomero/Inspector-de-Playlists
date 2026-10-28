@@ -19,6 +19,7 @@ const CACHE = "yt_cache";       // { consulta: {id, titulo, canal, thumb} }
 const CUOTA = "yt_cuota";       // { dia: "YYYY-MM-DD", usada: n }
 const ULTIMA = "ultima_lista";  // última lista procesada
 const WORKER = "spotify_worker"; // URL del Cloudflare Worker que lee Spotify
+const WORKER_POR_DEFECTO = "https://inspector-de-playlists.dantekaneki1.workers.dev";
 
 // ------------------------------------------------------------ utilidades
 const $ = (s) => document.querySelector(s);
@@ -128,7 +129,7 @@ function idPlaylist(link) {
 }
 
 async function leerSpotify(link) {
-  const worker = store.get(WORKER, "");
+  const worker = store.get(WORKER, WORKER_POR_DEFECTO);
   if (!worker) throw new Error("Primero cargá la dirección de tu Worker en Ajustes.");
   if (/spotify\.link|spotify\.app\.link/i.test(link))
     throw new Error("Ese es un link corto. Abrilo y copiá el link largo (open.spotify.com/playlist/...).");
@@ -422,7 +423,7 @@ $("#btn-cancelar").addEventListener("click", () => controlador?.abort());
 const dlg = $("#ajustes");
 function abrirAjustes() {
   $("#clave").value = store.get(CLAVE_API, "");
-  $("#worker").value = store.get(WORKER, "");
+  $("#worker").value = store.get(WORKER, WORKER_POR_DEFECTO);
   const usada = cuotaUsada();
   $("#cuota-hoy").textContent = `Hoy usaste aprox. ${usada} de 10.000 unidades (${Math.max(0, Math.floor((10000 - usada) / 100))} búsquedas disponibles).`;
   dlg.showModal();
@@ -443,6 +444,48 @@ $("#btn-borrar-cache").addEventListener("click", () => {
 });
 
 function actualizarAviso() { $("#aviso-clave").hidden = !!store.get(CLAVE_API, ""); }
+
+// ------------------------------------------------------------ instalar en el celular
+const NO_INSTALAR = "no_instalar";
+const instalada = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+let pedidoInstalar = null;
+
+function mostrarInstalar(texto, conBoton) {
+  if (instalada || store.get(NO_INSTALAR, false)) return;
+  $("#instalar-txt").textContent = texto;
+  $("#btn-instalar").hidden = !conBoton;
+  $("#instalar").hidden = false;
+}
+
+// Android / Chrome / Edge: el navegador avisa cuando se puede instalar
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  pedidoInstalar = e;
+  mostrarInstalar("Instalá la app para abrirla como cualquier otra, desde la pantalla de inicio.", true);
+});
+$("#btn-instalar").addEventListener("click", async () => {
+  if (!pedidoInstalar) return;
+  pedidoInstalar.prompt();
+  await pedidoInstalar.userChoice;
+  pedidoInstalar = null;
+  $("#instalar").hidden = true;
+});
+window.addEventListener("appinstalled", () => { $("#instalar").hidden = true; toast("App instalada"); });
+
+// iPhone / iPad: no hay botón automático, solo se puede desde Safari
+if (esIOS) {
+  const safari = !/crios|fxios|edgios/i.test(navigator.userAgent);
+  mostrarInstalar(safari
+    ? "Para instalarla: tocá Compartir (□↑) y después «Agregar a inicio»."
+    : "Para instalarla abrí esta página en Safari y tocá Compartir → «Agregar a inicio».", false);
+}
+
+$("#btn-instalar-cerrar").addEventListener("click", () => {
+  $("#instalar").hidden = true;
+  store.set(NO_INSTALAR, true);
+});
 
 // ------------------------------------------------------------ inicio
 actualizarAviso();

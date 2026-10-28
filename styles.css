@@ -96,6 +96,10 @@ textarea:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 
 .drop input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .drop b { color: var(--text); }
 
+.instalar { display: flex; align-items: center; gap: 10px; }
+.instalar span { flex: 1; }
+.instalar[hidden] { display: none; }
+
 .fila-link { display: flex; gap: 8px; }
 .fila-link input { flex: 1; min-width: 0; }
 #spotify-estado { margin: 10px 0 0; }
