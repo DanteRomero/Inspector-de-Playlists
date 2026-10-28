@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Playlist a YouTube</title>
+  <meta name="description" content="Pasá tu playlist de Spotify a links de YouTube y YouTube Music.">
+  <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Playlist YT">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <img src="icons/icon.svg" alt="" width="32" height="32">
+      <h1>Playlist <span>→</span> YouTube</h1>
+    </div>
+    <button id="btn-ajustes" class="icon-btn" aria-label="Ajustes" title="Ajustes">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.5-1-2 3.5L4.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
+    </button>
+  </header>
+
+  <main>
+    <!-- Aviso si falta la clave -->
+    <div id="aviso-clave" class="aviso" hidden>
+      Sin clave de YouTube te doy links de <b>búsqueda</b>. Cargá tu clave en
+      <button class="link" data-abrir-ajustes>Ajustes</button> para obtener links directos.
+    </div>
+
+    <section class="card">
+      <h2>1. Tu lista de canciones</h2>
+      <p class="sub">Pegá una canción por línea (<i>Artista - Canción</i>) o subí el CSV exportado de tu playlist.</p>
+
+      <div class="tabs" role="tablist">
+        <button role="tab" class="tab activa" data-tab="texto" aria-selected="true">Pegar lista</button>
+        <button role="tab" class="tab" data-tab="csv" aria-selected="false">Subir CSV</button>
+      </div>
+
+      <div class="panel" data-panel="texto">
+        <textarea id="entrada" rows="7" spellcheck="false"
+          placeholder="Soda Stereo - De música ligera&#10;Bad Bunny - Tití me preguntó&#10;Charly García - Demoliendo hoteles"></textarea>
+      </div>
+
+      <div class="panel" data-panel="csv" hidden>
+        <label class="drop" id="drop">
+          <input type="file" id="archivo" accept=".csv,text/csv">
+          <span class="drop-txt"><b>Elegí el archivo .csv</b><br>de Exportify, TuneMyMusic u otro exportador</span>
+        </label>
+        <p id="csv-estado" class="sub"></p>
+      </div>
+
+      <div class="fila-acciones">
+        <span id="contador" class="sub">0 canciones</span>
+        <button id="btn-buscar" class="btn primario">Buscar en YouTube</button>
+      </div>
+      <div id="progreso" class="progreso" hidden>
+        <div class="barra"><div id="barra-relleno"></div></div>
+        <div class="fila-acciones">
+          <span id="progreso-txt" class="sub"></span>
+          <button id="btn-cancelar" class="btn chico">Cancelar</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="resultados-card" class="card" hidden>
+      <div class="resultados-head">
+        <h2>2. Resultados</h2>
+        <span id="resumen" class="sub"></span>
+      </div>
+      <div class="acciones-globales">
+        <button id="btn-reproducir" class="btn">▶ Reproducir todo</button>
+        <button id="btn-copiar" class="btn">Copiar links</button>
+        <button id="btn-txt" class="btn">Descargar .txt</button>
+      </div>
+      <div id="tandas" class="tandas"></div>
+      <ol id="lista" class="lista"></ol>
+    </section>
+  </main>
+
+  <!-- Ajustes -->
+  <dialog id="ajustes">
+    <form method="dialog" class="dlg">
+      <h2>Ajustes</h2>
+      <label for="clave">Clave de la API de YouTube</label>
+      <input id="clave" type="password" autocomplete="off" placeholder="AIza...">
+      <p class="sub">Se guarda solo en este dispositivo, no se sube a GitHub. Cada canción buscada gasta 100 de las 10.000 unidades diarias (≈100 canciones por día). Las que ya buscaste quedan guardadas y no gastan de nuevo.</p>
+      <p class="sub" id="cuota-hoy"></p>
+      <div class="fila-acciones">
+        <button type="button" id="btn-borrar-cache" class="btn chico">Borrar canciones guardadas</button>
+        <button value="ok" id="btn-guardar" class="btn primario">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
